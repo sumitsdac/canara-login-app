@@ -1,95 +1,70 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+/* eslint-disable @next/next/no-img-element */
+"use client";
+import React, { useState, useEffect } from "react";
+// import Cookies from "js-cookie";
 
-export default function Home() {
+import Login from "../components/login/login";
+import OtpForm from "../components/otp/otp";
+import Header from "../components/header/header";
+
+import "./page.scss";
+import Loader from "../../public/Rolling.gif";
+
+import { CANCEL_API } from "../app/_lib/api";
+
+const App = () => {
+  const [userLoggedIn, setUserLoginStatus] = useState(false);
+  const [sessionID, setSessionID] = useState("");
+  const [loadingSessionValidity, setLoadingSessionValidity] = useState(true);
+  const [sessionValid, setSessionValid] = useState(false);
+
+  const validateSession = () => {
+    // const OAuthSessionCookie = Cookies.get("OAuthSession");
+    const searchParams = new URLSearchParams(document.location.search);
+    const OAuthSessionQueryParam = searchParams.get("session_identifier");
+    setSessionValid(true);
+    setLoadingSessionValidity(false);
+    setSessionID(OAuthSessionQueryParam);
+  };
+
+  const cancelLogin = (e) => {
+    e.preventDefault();
+    window.location.replace(CANCEL_API + "?session_identifier=" + sessionID);
+  };
+
+  useEffect(() => {
+    validateSession();
+  }, []);
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+    <div>
+      <Header />
+      <div className="form-wrapper">
+        {!loadingSessionValidity ? (
+          sessionValid ? (
+            !userLoggedIn ? (
+              <Login
+                sessionID={sessionID}
+                validateSession={validateSession}
+                setUserLoginStatus={setUserLoginStatus}
+                cancelLogin={cancelLogin}
+              />
+            ) : (
+              <OtpForm
+                sessionID={sessionID}
+                validateSession={validateSession}
+                cancelLogin={cancelLogin}
+              />
+            )
+          ) : (
+            <h1 className="form-wrapper">Invalid session</h1>
+          )
+        ) : (
+          <img width="120px" height="120px" src={Loader.src} alt="Loader" />
+        )}
       </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </div>
   );
-}
+};
+
+export default App;
