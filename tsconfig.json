@@ -33,7 +33,8 @@
     "sandbox-build/types/**/*.ts",
     "canarabank/types/**/*.ts",
     "prod-build/types/**/*.ts",
-    "canara-build/types/**/*.ts"
+    "canara-build/types/**/*.ts",
+    "build/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
