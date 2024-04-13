@@ -9,7 +9,6 @@ const nextConfig = {
   sassOptions: {
     includePaths: [Path.join(__dirname, "app/styles")],
   },
-  trailingSlash: true,
   output: "export",
   distDir: "canara-build",
 };
