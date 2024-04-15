@@ -1,4 +1,4 @@
-const domain = "apigee-tr-test.digitalapicraft.com";
+export const domain = "apigee-tr-test.digitalapicraft.com";
 
 export const VERIFY_LOGIN_API = `https://${domain}/v1/user-auth/login/verify`;
 export const VERIFY_OTP_API = `https://${domain}/v1/user-auth/otp/verify`;

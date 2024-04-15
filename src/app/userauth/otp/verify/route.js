@@ -1,5 +1,4 @@
 import { VERIFY_OTP_API } from "../../../_lib/api";
-import { redirect } from "next/navigation";
 
 export async function POST(req) {
   const { session_identifier, otp } = await req.json();
