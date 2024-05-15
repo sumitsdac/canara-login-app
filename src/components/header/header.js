@@ -2,7 +2,7 @@
 import React from "react";
 
 import logo from "../../../public/CB--API-BANKING-LOGO.jpg";
-import "./header.scss";
+import "./Header.scss";
 
 const Header = () => {
   return (

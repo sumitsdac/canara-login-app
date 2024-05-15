@@ -1,4 +1,4 @@
-import { VERIFY_LOGIN_API } from "../../../_lib/api";
+import { VERIFY_LOGIN_API, PROXY } from "../../../_lib/api";
 
 export async function POST(req) {
   const { username, password, session_identifier } = await req.json();
@@ -12,16 +12,18 @@ export async function POST(req) {
     password,
     session_identifier,
   });
-
   return await new Promise((resolve, reject) => {
     fetch(VERIFY_LOGIN_API, {
       method: "post",
       headers: headersObj,
       body: bodyContent,
     })
-      .then((res) => resolve(res))
-      .catch((err) => {
-        reject(err);
+      .then((response) => {
+        resolve(response);
+      })
+      .catch((e) => {
+        console.log(e);
+        reject(e);
       });
   });
 }

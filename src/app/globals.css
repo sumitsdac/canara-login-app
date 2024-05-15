@@ -88,3 +88,7 @@ body {
 body {
   height: 100vh;
 }
+
+nextjs-portal {
+  display: none;
+}

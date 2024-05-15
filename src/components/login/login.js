@@ -1,54 +1,62 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 import axios from "axios";
-
-import RefreshIcon from "../../../public/Refresh-icon.svg";
-import { GenerateCaptcha } from "../../app/_lib/captcha";
+import ReCAPTCHA from "react-google-recaptcha";
 
 import {
   SERVER_SIDE_VERIFY_LOGIN_API,
   AUTH_CODE_GEN_API,
+  client_key,
+  client_secret,
+  enable_captcha,
 } from "../../app/_lib/api";
 
 const Login = (props) => {
   const recaptchaRef = useRef(null);
   const [userName, setUserName] = useState("");
   const [userPassword, setUserPassword] = useState("");
-  const [loginCaptcha, setLoginCaptcha] = useState("");
   const [error, setError] = useState(false);
   const [htmlContent, setHtmlContent] = useState("");
   const [errorMessage, setErrorMessage] = useState(
     "* please fill all the required fields"
   );
-  const [actualCaptcha, setActualCaptcha] = useState("");
-  const [captchaHTMLString, setCaptchaHTMLString] = useState("");
   const [captchaValid, setCaptchaValid] = useState(false);
   const [attemptLimitExceeded, setAttemptLimitExceeded] = useState(false);
 
   const handleUsernameChange = (event) => {
     setUserName(event.target.value);
   };
-
   const handlePasswordChange = (event) => {
     setUserPassword(event.target.value);
   };
 
-  const handleLoginCaptchaChange = (event) => {
-    setLoginCaptcha(event.target.value);
+  const handleRecaptchaVerify = async (token) => {
+    if (token) {
+      try {
+        await fetch("/userauth/captcha", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: JSON.stringify({ secret: client_secret, token: token }),
+        });
+      } catch (err) {
+        console.log(err);
+      }
+    }
   };
 
   const onSubmit = (event) => {
     event.preventDefault();
-    if (userName === "" || userPassword === "" || loginCaptcha === "") {
+    const captchaValue = recaptchaRef.current?.getValue() || "";
+    if (userName === "" || userPassword === "") {
       setErrorMessage("* Please fill all the required fields");
       setError(true);
-    } else if (!validCaptcha(loginCaptcha)) {
+    } else if (!captchaValue && enable_captcha === "TRUE") {
       setErrorMessage("Please verify the captcha");
       setError(true);
       setCaptchaValid(false);
-      initCaptcha();
     } else {
       setCaptchaValid(true);
 
@@ -86,15 +94,27 @@ const Login = (props) => {
             }
           })
           .catch((e) => {
+            console.log(e?.response?.status);
             if (e.response?.data?.max_login_attempt_crossed) {
+              window.history.replaceState(
+                window.history.state,
+                "",
+                window.location.origin
+              );
               setAttemptLimitExceeded(true);
             } else if (
               e?.response?.status === 400 ||
               e?.response?.status === 401
             ) {
-              setErrorMessage(
-                "Invalid Credentials. Please provide correct username/password"
-              );
+              if (
+                e?.response?.data.httpMessage === "oauth_flow_status is invalid"
+              ) {
+                setErrorMessage("* Invalid Session");
+              } else {
+                setErrorMessage(
+                  "Invalid Credentials. Please provide correct username/password"
+                );
+              }
               setError(true);
             } else if (e?.response?.status === 415) {
               setErrorMessage("Invalid Content or Media Type");
@@ -111,112 +131,75 @@ const Login = (props) => {
     }
   };
 
-  const initCaptcha = () => {
-    const captcha = GenerateCaptcha();
-    setCaptchaHTMLString(captcha.html);
-    setActualCaptcha(captcha.captchaValue);
-  };
-
-  const validCaptcha = (input) => {
-    if (input === actualCaptcha) {
-      return true;
-    } else {
-      return false;
-    }
-    return true;
-  };
-
   useEffect(() => {
     props.validateSession();
-    initCaptcha();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (htmlContent) {
     return <div dangerouslySetInnerHTML={{ __html: htmlContent }} />;
   }
-  return !attemptLimitExceeded ? (
-    <form className="form">
-      <h1 className="form_title"> Log In </h1>
-      <div className="form_div">
-        <input
-          type="text"
-          className={`form_input required ${
-            error ? (userName === "" ? "error" : "") : ""
-          }`}
-          placeholder=" "
-          value={userName}
-          onChange={handleUsernameChange}
-        />
-        <label className="form_label">Username</label>
-      </div>
-      <div className="form_div">
-        <input
-          type="password"
-          className={`form_input required ${
-            error ? (userPassword === "" ? "error" : "") : ""
-          }`}
-          placeholder=" "
-          value={userPassword}
-          onChange={handlePasswordChange}
-        />
-        <label className="form_label">Password</label>
-      </div>
 
-      <div id="captcha" className="form_div">
-        <div
-          className="preview"
-          dangerouslySetInnerHTML={{ __html: captchaHTMLString }}
-        ></div>
-        <div className="captcha_form">
+  return !attemptLimitExceeded ? (
+    <>
+      <form className="form">
+        <h1 className="form_title"> Log In </h1>
+        <div className="form_div">
           <input
             type="text"
-            id="captcha_form"
-            className={`form_input form_input_captcha required ${
-              error ? (loginCaptcha === "" || !captchaValid ? "error" : "") : ""
+            className={`form_input required ${
+              error ? (userName === "" ? "error" : "") : ""
             }`}
             placeholder=" "
-            value={loginCaptcha}
-            onChange={handleLoginCaptchaChange}
+            value={userName}
+            onChange={handleUsernameChange}
           />
-          <label className="form_label form_label_captcha">Enter Captcha</label>
-          <button
-            className="captcha_refersh"
-            onClick={(e) => {
-              e.preventDefault();
-              initCaptcha();
-            }}
-          >
-            <img
-              width={28}
-              height={28}
-              src={RefreshIcon.src}
-              alt="refresh icon"
-            />
-          </button>
+          <label className="form_label">Username</label>
         </div>
-      </div>
-      <div className="button-wrapper">
-        {error ? (
-          <div
-            className="error"
-            dangerouslySetInnerHTML={{ __html: errorMessage }}
-          ></div>
-        ) : null}
-        <input
-          type="submit"
-          className="form_button login"
-          value="Log In"
-          onClick={onSubmit}
-        />
-        <input
-          type="submit"
-          className="form_button secondary"
-          value="Cancel"
-          onClick={(e) => props.cancelLogin(e)}
-        />
-      </div>
-    </form>
+        <div className="form_div">
+          <input
+            type="password"
+            className={`form_input required ${
+              error ? (userPassword === "" ? "error" : "") : ""
+            }`}
+            placeholder=" "
+            value={userPassword}
+            onChange={handlePasswordChange}
+          />
+          <label className="form_label">Password</label>
+        </div>
+
+        {enable_captcha === "TRUE" && (
+          <div className={"captch-v2"}>
+            <ReCAPTCHA
+              sitekey={client_key}
+              ref={recaptchaRef}
+              onChange={handleRecaptchaVerify}
+            />
+          </div>
+        )}
+        <div className="button-wrapper">
+          {error ? (
+            <div
+              className="error"
+              dangerouslySetInnerHTML={{ __html: errorMessage }}
+            ></div>
+          ) : null}
+          <input
+            type="submit"
+            className="form_button login"
+            value="Log In"
+            onClick={onSubmit}
+          />
+          <input
+            type="submit"
+            className="form_button secondary"
+            value="Cancel"
+            onClick={(e) => props.cancelLogin(e)}
+          />
+        </div>
+      </form>
+    </>
   ) : (
     <h1 className="form-wrapper">Login attempt limit has exceeded</h1>
   );

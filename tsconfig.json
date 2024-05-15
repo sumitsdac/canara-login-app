@@ -35,7 +35,8 @@
     "prod-build/types/**/*.ts",
     "canara-build/types/**/*.ts",
     "build/types/**/*.ts",
-    "out/types/**/*.ts"
+    "out/types/**/*.ts",
+    "dev-build/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

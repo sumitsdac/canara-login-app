@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-
 import {
   SERVER_SIDE_VERIFY_OTP_API,
   AUTH_CODE_GEN_API,
